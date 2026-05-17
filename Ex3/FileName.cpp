@@ -18,5 +18,6 @@ int main() {
 	benchmank("Parallel with no race condition (mutex)", n, parallelSolutionMutex);
 	benchmank("Parallel with no race condition (mutex + load balance)", n, parallelSolutionLoadBalanceWithMutex);
 	benchmank("Parallel with no race condition (mutex + better load balance)", n, parallelSolutionBetterLoadBalanceWithMutex);
+	benchmank("Parallel with no race condition (NO mutex + better load balance)", n, parallelSolutionBetterLoadBalanceWithNoMutex);
 	return 0;
 }

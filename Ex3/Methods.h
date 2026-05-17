@@ -216,6 +216,48 @@ long parallelSolutionBetterLoadBalanceWithMutex(long size) {
 	return noPrimes;
 }
 
+void countPrimesStep(long lowerLimit, long upperLimit, long step, long& result) {
+	double startTime = omp_get_wtime();
+
+	for (long i = lowerLimit; i < upperLimit; i += step) {
+		if (i <= 1) continue;
+		bool isPrime = true;
+		for (long j = 2; j * j <= i; j++) {
+			if (i % j == 0) {
+				isPrime = false;
+				break;
+			}
+		}
+		if (isPrime) {
+			result += 1;
+		}
+	}
+	double stopTime = omp_get_wtime();
+	printf("\nThread takes %f seconds", stopTime - startTime);
+}
+
+//parallel V (better load balancing + NO mutex)
+long parallelSolutionBetterLoadBalanceWithNoMutex(long size) {
+	long noPrimes = 0;
+	int noThreads = omp_get_num_procs();
+	vector<thread>threads;
+	vector<long>results(noThreads, 0);
+	long start = 1;
+	for (int i = 0; i < noThreads; i++) {
+		threads.push_back(thread(countPrimesStep, start, size, 2 * noThreads, ref(results[i])));
+		start += 2;
+	}
+	for (int i = 0; i < noThreads; i++) {
+		threads[i].join();
+	}
+	for (int i = 0; i < noThreads; i++) {
+		noPrimes += results[i];
+	}
+	noPrimes += 1;//just one more also for the value 2
+
+	return noPrimes;
+}
+
 int counterBenchmark = 0;
 
 void benchmank(string description, long size, long (*functionPointer)(long)) {
