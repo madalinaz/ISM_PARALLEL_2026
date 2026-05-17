@@ -2,6 +2,9 @@
 
 #include<iostream>
 #include<omp.h>
+#include<thread>
+#include<vector>
+#include<mutex>
 using namespace std;
 
 void countPrimes(long lowerLimit, long upperLimit, long& result) {
@@ -19,11 +22,136 @@ void countPrimes(long lowerLimit, long upperLimit, long& result) {
 	}
 }
 
-
 //count of primes using sequential implementation
 long sequentialSolution(long size) {
 	long noPrimes = 0;
 	countPrimes(0, size, noPrimes);
+	return noPrimes;
+}
+
+//because of the 0 and 1
+void countPrimesModif(long lowerLimit, long upperLimit, long& result) {
+	for (long i = lowerLimit; i < upperLimit; ++i) {
+		if (i <= 1) continue;
+		bool isPrime = true;
+		for (long j = 2; j <= i / 2; j++) {
+			if (i % j == 0) {
+				isPrime = false;
+				break;
+			}
+		}
+		if (isPrime) {
+			result += 1;
+		}
+	}
+}
+
+//count of primes using sequential implementation (0 and 1 done correct)
+long sequentialSolutionModif(long size) {
+	long noPrimes = 0;
+	countPrimesModif(0, size, noPrimes);
+	return noPrimes;
+}
+
+//because of the 0 and 1
+void countPrimesModif2(long lowerLimit, long upperLimit, long& result) {
+	lowerLimit = (lowerLimit < 2) ? 2 : lowerLimit;
+	for (long i = lowerLimit; i < upperLimit; ++i) {
+		bool isPrime = true;
+		for (long j = 2; j <= i / 2; j++) {
+			if (i % j == 0) {
+				isPrime = false;
+				break;
+			}
+		}
+		if (isPrime) {
+			result += 1;
+		}
+	}
+}
+
+//count of primes using sequential implementation (0 and 1 done correct)
+long sequentialSolutionModif2(long size) {
+	long noPrimes = 0;
+	countPrimesModif2(0, size, noPrimes);
+	return noPrimes;
+}
+
+//with the sqrt
+void countPrimesOptimized(long lowerLimit, long upperLimit, long& result) {
+	lowerLimit = (lowerLimit < 2) ? 2 : lowerLimit;
+	for (long i = lowerLimit; i < upperLimit; ++i) {
+		bool isPrime = true;
+		for (long j = 2; j*j <= i; j++) {
+			if (i % j == 0) {
+				isPrime = false;
+				break;
+			}
+		}
+		if (isPrime) {
+			result += 1;
+		}
+	}
+}
+
+long sequentialSolutionOptimized(long size) {
+	long noPrimes = 0;
+	countPrimesOptimized(0, size, noPrimes);
+	return noPrimes;
+}
+
+
+//parallel I (race condition)
+long parallelSolution(long size) {
+	long noPrimes = 0;
+	int noThreads = omp_get_num_procs();
+	vector<thread>threads;
+	long interval = size / noThreads;
+	for (int i = 0; i < noThreads; i++) {
+		long lower = i * interval;
+		long upper = (i + 1) * interval;
+		threads.push_back(thread(countPrimesOptimized, lower, upper, ref(noPrimes)));
+	}
+	for (int i = 0; i < noThreads; i++) {
+		threads[i].join();
+	}
+	return noPrimes;
+}
+
+void countPrimesMutex(long lowerLimit, long upperLimit, long& result, mutex& mutex) {
+	lowerLimit = (lowerLimit < 2) ? 2 : lowerLimit;
+	for (long i = lowerLimit; i < upperLimit; ++i) {
+		bool isPrime = true;
+		for (long j = 2; j * j <= i; j++) {
+			if (i % j == 0) {
+				isPrime = false;
+				break;
+			}
+		}
+		mutex.lock();
+		if (isPrime) {
+			result += 1;
+		}
+		mutex.unlock();
+	}
+}
+
+
+//parallel II (no race condition solved by using mutex)
+long parallelSolutionMutex(long size) {
+	long noPrimes = 0;
+	int noThreads = omp_get_num_procs();
+	vector<thread>threads;
+	long interval = size / noThreads;
+	mutex lockObject;
+	for (int i = 0; i < noThreads; i++) {
+		long lower = i * interval;
+		long upper = (i + 1) * interval;
+		threads.push_back(thread(countPrimesMutex, lower, upper, ref(noPrimes), ref(lockObject)));
+	}
+	for (int i = 0; i < noThreads; i++) {
+		threads[i].join();
+	}
 	return noPrimes;
 }
 
@@ -33,9 +161,9 @@ void benchmank(string description, long size, long (*functionPointer)(long)) {
 	counterBenchmark++;
 	printf("\n\n----------------------%d------------------", counterBenchmark);
 	printf("\nTest for %s", description.c_str());
-	long startTime = omp_get_wtime();
+	double startTime = omp_get_wtime();
 
-	double result = functionPointer(size);
+	long result = functionPointer(size);
 
 	double stopTime = omp_get_wtime();
 
