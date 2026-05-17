@@ -265,7 +265,7 @@ void ompCountPrimes(long lowerLimit, long upperLimit, long& result) {
 	lowerLimit = (lowerLimit < 2) ? 2 : lowerLimit;
 
 	long localVariable = 0;
-#pragma omp parallel for reduction(+:localVariable)
+#pragma omp parallel for reduction(+:localVariable) schedule(dynamic,500)
 	for (long i = lowerLimit; i < upperLimit; ++i) {
 		bool isPrime = true;
 		for (long j = 2; j * j <= i; j++) {
