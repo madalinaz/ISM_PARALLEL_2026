@@ -7,7 +7,7 @@ using namespace std;
 int main() {
 	//load balancing
 	//open mp
-	long n = 1e5;
+	long n = 4e5;
 	//ONLY SEQUENTIAL
 	benchmank("Sequential", n, sequentialSolution);
 	benchmank("Sequential with good 0 and 1 (version 1)", n, sequentialSolutionModif);
@@ -19,5 +19,6 @@ int main() {
 	benchmank("Parallel with no race condition (mutex + load balance)", n, parallelSolutionLoadBalanceWithMutex);
 	benchmank("Parallel with no race condition (mutex + better load balance)", n, parallelSolutionBetterLoadBalanceWithMutex);
 	benchmank("Parallel with no race condition (NO mutex + better load balance)", n, parallelSolutionBetterLoadBalanceWithNoMutex);
+	benchmank("Parallel Open MP", n, ompParallelSolution);
 	return 0;
 }

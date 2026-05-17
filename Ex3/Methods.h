@@ -178,7 +178,7 @@ void countPrimesMutexStep(long lowerLimit, long upperLimit, long step, long& res
 		mutex.unlock();
 	}
 	double stopTime = omp_get_wtime();
-	printf("\nThread takes %f seconds", stopTime - startTime);
+	//printf("\nThread takes %f seconds", stopTime - startTime);
 }
 
 //parallel III (load balancing + mutex)
@@ -233,7 +233,7 @@ void countPrimesStep(long lowerLimit, long upperLimit, long step, long& result) 
 		}
 	}
 	double stopTime = omp_get_wtime();
-	printf("\nThread takes %f seconds", stopTime - startTime);
+	//printf("\nThread takes %f seconds", stopTime - startTime);
 }
 
 //parallel V (better load balancing + NO mutex)
@@ -255,6 +255,35 @@ long parallelSolutionBetterLoadBalanceWithNoMutex(long size) {
 	}
 	noPrimes += 1;//just one more also for the value 2
 
+	return noPrimes;
+}
+
+//best version using sequential implementation
+//transforming it in parallel programming
+//using open mp
+void ompCountPrimes(long lowerLimit, long upperLimit, long& result) {
+	lowerLimit = (lowerLimit < 2) ? 2 : lowerLimit;
+
+	long localVariable = 0;
+#pragma omp parallel for reduction(+:localVariable)
+	for (long i = lowerLimit; i < upperLimit; ++i) {
+		bool isPrime = true;
+		for (long j = 2; j * j <= i; j++) {
+			if (i % j == 0) {
+				isPrime = false;
+				break;
+			}
+		}
+		if (isPrime) {
+			localVariable += 1;
+		}
+	}
+	result = localVariable;
+}
+
+long ompParallelSolution(long size) {
+	long noPrimes = 0;
+	ompCountPrimes(0, size, noPrimes);
 	return noPrimes;
 }
 
