@@ -119,6 +119,7 @@ long parallelSolution(long size) {
 }
 
 void countPrimesMutex(long lowerLimit, long upperLimit, long& result, mutex& mutex) {
+	//double startTime = omp_get_wtime();
 	lowerLimit = (lowerLimit < 2) ? 2 : lowerLimit;
 	for (long i = lowerLimit; i < upperLimit; ++i) {
 		bool isPrime = true;
@@ -134,6 +135,8 @@ void countPrimesMutex(long lowerLimit, long upperLimit, long& result, mutex& mut
 		}
 		mutex.unlock();
 	}
+	/*double stopTime = omp_get_wtime();
+	printf("\nThread takes %f seconds", stopTime - startTime);*/
 }
 
 
@@ -152,7 +155,29 @@ long parallelSolutionMutex(long size) {
 	for (int i = 0; i < noThreads; i++) {
 		threads[i].join();
 	}
+
 	return noPrimes;
+}
+
+void countPrimesMutexStep(long lowerLimit, long upperLimit, long step, long& result, mutex& mutex) {
+	//double startTime = omp_get_wtime();
+	lowerLimit = (lowerLimit < 2) ? 2 : lowerLimit;
+	for (long i = lowerLimit; i < upperLimit; ++i) {
+		bool isPrime = true;
+		for (long j = 2; j * j <= i; j++) {
+			if (i % j == 0) {
+				isPrime = false;
+				break;
+			}
+		}
+		mutex.lock();
+		if (isPrime) {
+			result += 1;
+		}
+		mutex.unlock();
+	}
+	/*double stopTime = omp_get_wtime();
+	printf("\nThread takes %f seconds", stopTime - startTime);*/
 }
 
 int counterBenchmark = 0;
