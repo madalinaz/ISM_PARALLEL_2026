@@ -161,8 +161,9 @@ long parallelSolutionMutex(long size) {
 
 void countPrimesMutexStep(long lowerLimit, long upperLimit, long step, long& result, mutex& mutex) {
 	//double startTime = omp_get_wtime();
-	lowerLimit = (lowerLimit < 2) ? 2 : lowerLimit;
-	for (long i = lowerLimit; i < upperLimit; ++i) {
+
+	for (long i = lowerLimit; i < upperLimit; i+=step) {
+		if (i <= 1) continue;
 		bool isPrime = true;
 		for (long j = 2; j * j <= i; j++) {
 			if (i % j == 0) {
@@ -178,6 +179,22 @@ void countPrimesMutexStep(long lowerLimit, long upperLimit, long step, long& res
 	}
 	/*double stopTime = omp_get_wtime();
 	printf("\nThread takes %f seconds", stopTime - startTime);*/
+}
+
+//parallel III (load balancing + mutex)
+long parallelSolutionLoadBalanceWithMutex(long size) {
+	long noPrimes = 0;
+	int noThreads = omp_get_num_procs();
+	vector<thread>threads;
+	mutex lockObject;
+	for (int i = 0; i < noThreads; i++) {
+		threads.push_back(thread(countPrimesMutexStep, i, size, noThreads, ref(noPrimes), ref(lockObject)));
+	}
+	for (int i = 0; i < noThreads; i++) {
+		threads[i].join();
+	}
+
+	return noPrimes;
 }
 
 int counterBenchmark = 0;
